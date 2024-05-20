@@ -56,6 +56,21 @@ const downloadLesson = async (link: string, authToken: string) => {
 
 
     const videoIframeElement = await page.$("iframe")
+
+    const videoIframeLink = await page.$$eval("iframe", el => el.map(x => x.src))
+    videoIframeLink?.forEach(async (s) => {
+      if (s.includes("wistia")) {
+
+        console.log(`Downloading: ${s}`)
+        await new Promise<void>(r => {
+          let process = exec(`yt-dlp "${s}" --referer "${link}" -P "${filePath}"`)
+          process.on("close", () => r())
+        })
+        console.log("Download finished")
+      }
+    })
+
+
     const videoIframe = await videoIframeElement?.contentFrame()
     const videoSources = await videoIframe?.$$eval("source", el => el.map(x => x.src))
     videoSources?.forEach(async (s) => {
@@ -66,6 +81,7 @@ const downloadLesson = async (link: string, authToken: string) => {
       })
       console.log("Download finished")
     })
+
     await browser.close()
   } catch (e) {
     console.log("Erro:", e);
